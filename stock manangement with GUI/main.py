@@ -5,9 +5,40 @@ import csv
 import tempfile
 import shutil
 import os
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 file_path = os.path.join(dir_path, 'inventory.txt')
+users_file_path = os.path.join(dir_path, 'users.csv')
+
+
+def grafic():
+    produse = []
+    stoc = []
+    try:
+        with open(file_path, 'r') as file:
+            for line in file:
+                parts = line.strip().split(',')
+                if len(parts) >= 4: 
+                    produse.append(parts[2])
+                    stoc.append(int(parts[3]))        
+    except FileNotFoundError:
+        messagebox.showerror("Eroare", "Fișierul de inventar nu a fost găsit.")
+        return
+
+  
+    fig, ax = plt.subplots()
+    ax.bar(produse, stoc, color='blue')
+    ax.set_xlabel('Produse')
+    ax.set_ylabel('Stoc')
+    ax.set_title('Stocul produselor')
+
+    graph_window=tk.Toplevel()
+    graph_window.title("Grafic stoc")
+    canvas = FigureCanvasTkAgg(fig, master=graph_window)
+    canvas.draw()
+    canvas.get_tk_widget().pack()
 
 def adauga_produs():
     categorie = categorie_entry.get()
@@ -31,7 +62,7 @@ def adauga_produs():
         file.write(f"{cod},{categorie},{produs},1\n")
         lista_produse.insert(tk.END, f"{cod} - {categorie} - {produs} - Stoc: 1")  
         messagebox.showinfo("Succes", f"Produsul {produs} a fost adăugat cu succes cu codul {cod}")
-
+        
 
 def gestioneaza_stoc():
     cod = cod_entry.get()
@@ -68,6 +99,7 @@ def gestioneaza_stoc():
                 return
 
     refresh_list()
+      
 
 
 def refresh_list():
@@ -83,6 +115,7 @@ def refresh_list():
     except FileNotFoundError:
         messagebox.showerror("Eroare", "Fișierul de inventar nu a fost găsit.")
 
+
         
 def register():
     username = username_entry.get()
@@ -90,7 +123,7 @@ def register():
     if not username or not password:
         messagebox.showerror("Eroare", "Numele de utilizator și parola sunt obligatorii.")
         return
-    with open('users.csv', 'a', newline='') as file:
+    with open(users_file_path, 'a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow([username, password])
     messagebox.showinfo("Succes", "Utilizatorul a fost înregistrat cu succes.")
@@ -107,7 +140,7 @@ def login():
         messagebox.showerror("Eroare", "Numele de utilizator și parola sunt obligatorii.")
         return
     
-    with open('users.csv', 'r', newline='') as file:
+    with open(users_file_path, 'r', newline='') as file:
         reader = csv.reader(file)
         for row in reader:
             if row[0] == username and row[1] == password:
@@ -162,6 +195,9 @@ def main_menu():
     lista_produse = tk.Listbox(root, width=50)
     lista_produse.grid(row=1, column=0, columnspan=2, padx=10, pady=5)
     refresh_list()
+    graph_button = ttk.Button(root, text="Afișează Graficul", command=grafic)
+    graph_button.grid(row=6, column=0, columnspan=2, padx=5, pady=5)
+    root.protocol("WM_DELETE_WINDOW", root.quit)
 
     root.mainloop()
 
@@ -200,6 +236,7 @@ def show_login_window():
 
     login_button = ttk.Button(login_window, text="Autentificare", command=login)
     login_button.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
+    
 
 root = tk.Tk()
 root.title("Autentificare")
@@ -209,5 +246,6 @@ register_button.grid(row=0, column=0, padx=5, pady=5)
 
 login_button = ttk.Button(root, text="Autentificare", command=show_login_window)
 login_button.grid(row=0, column=1, padx=5, pady=5)
+
 
 root.mainloop()
